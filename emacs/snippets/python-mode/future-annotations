@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: future annotations
+# key: fia
+# --
+
+from __future__ import annotations

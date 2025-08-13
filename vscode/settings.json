@@ -1,0 +1,146 @@
+{
+  /**
+  * Better Defaults
+  */
+  "editor.copyWithSyntaxHighlighting": false,
+  "diffEditor.ignoreTrimWhitespace": false,
+  "editor.emptySelectionClipboard": false,
+  "workbench.editor.enablePreview": false,
+  "window.newWindowDimensions": "inherit",
+  "editor.multiCursorModifier":"ctrlCmd",
+  "files.trimTrailingWhitespace": true,
+  "diffEditor.renderSideBySide": false,
+  "editor.snippetSuggestions": "top",
+  "editor.detectIndentation": false,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  /**
+  * Hiding UI
+  */
+  "workbench.sideBar.location": "right",
+  "workbench.editor.showTabs": "single",
+  "workbench.statusBar.visible": false,
+  "editor.minimap.enabled": false,
+  "workbench.activityBar.location": "hidden",
+  /**
+  * Find
+  */
+  "search.useIgnoreFiles": false,
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/*.code-search": true,
+    "**/.venv": true,
+    "**/dist": true,
+    "**/obj": true,
+  },
+  /**
+  * Silence the Noise
+  */
+  "breadcrumbs.enabled": false,
+  "scm.diffDecorations": "none",
+  "editor.hover.enabled": false,
+  "editor.matchBrackets": "never",
+  "workbench.tips.enabled": false,
+  "editor.colorDecorators": false,
+  "git.decorations.enabled": false,
+  "workbench.startupEditor": "none",
+  "editor.lightbulb.enabled": "off",
+  "editor.selectionHighlight": false,
+  "editor.overviewRulerBorder": false,
+  "editor.renderLineHighlight": "none",
+  "editor.occurrencesHighlight": "off",
+  "problems.decorations.enabled": false,
+  "editor.renderControlCharacters": false,
+  "editor.hideCursorInOverviewRuler": false,
+  "editor.gotoLocation.multipleReferences": "goto",
+  "editor.gotoLocation.multipleDefinitions": "goto",
+  "editor.gotoLocation.multipleDeclarations": "goto",
+  "workbench.editor.enablePreviewFromQuickOpen": false,
+  "editor.gotoLocation.multipleImplementations": "goto",
+  "editor.gotoLocation.multipleTypeDefinitions": "goto",
+  "editor.fontSize": 16,
+  "editor.fontFamily": "'Caskaydia Cove NF','Droid Sans Mono', 'monospace', monospace",
+  "editor.lineHeight": 0,
+  "editor.suggestLineHeight": 28,
+  "terminal.integrated.fontSize": 15,
+  "terminal.integrated.lineHeight": 1.5,
+  "workbench.colorTheme": "GitHub Dark Default",
+  "chat.commandCenter.enabled": false,
+  "window.menuBarVisibility": "hidden",
+"workbench.layoutControl.enabled": false,
+"workbench.iconTheme": "material-icon-theme",
+"workbench.secondarySideBar.defaultVisibility": "hidden",
+  // "editor.tabSize": 2,
+  // "editor.fontLigatures": true,
+  // "editor.formatOnSave": true,
+  // "editor.formatOnPaste": true,
+  // "window.dialogStyle": "custom",
+  // "window.menuBarVisibility": "compact",
+  // "window.titleBarStyle": "custom",
+  // "workbench.iconTheme": "material-icon-theme",
+  // "editor.lineHeight": 1.4,
+  // "editor.minimap.autohide": true,
+  // "workbench.editor.showTabs": "single",
+  // "github.copilot.chat.localeOverride": "en",
+  // "python.analysis.autoImportCompletions": true,
+  // "python.analysis.autoFormatStrings": true,
+  // "python.analysis.inlayHints.callArgumentNames": "all",
+  // "python.analysis.inlayHints.functionReturnTypes": true,
+  // "python.analysis.inlayHints.pytestParameters": true,
+  // "python.analysis.inlayHints.variableTypes": true,
+  // "keyboard.dispatch": "keyCode",
+  // "telemetry.telemetryLevel": "off",
+  // "vsicons.dontShowNewVersionMessage": true,
+  // "rubyLsp.enabledFeatures": {
+  //   "codeActions": true,
+  //   "diagnostics": true,
+  //   "documentHighlights": true,
+  //   "documentLink": true,
+  //   "documentSymbols": true,
+  //   "foldingRanges": true,
+  //   "formatting": true,
+  //   "hover": true,
+  //   "inlayHint": true,
+  //   "onTypeFormatting": true,
+  //   "selectionRanges": true,
+  //   "semanticHighlighting": true,
+  //   "completion": true,
+  //   "codeLens": true,
+  //   "definition": true,
+  //   "workspaceSymbol": true,
+  //   "references": true
+  // },
+  // "zenMode.showTabs": "none",
+  // "emmet.includeLanguages": {
+  //   "erb": "html",
+  //   "blade": "html"
+  // },
+  // "rubyLsp.rubyVersionManager": "rbenv",
+  // "[ruby]": {
+  //   "editor.defaultFormatter": "Shopify.ruby-lsp"
+  // },
+  // "[erb]": {
+  //   "editor.defaultFormatter": "Shopify.ruby-lsp",
+  //   "editor.formatOnSave": true
+  // },
+  // "workbench.startupEditor": "none",
+  // "[typescript]": {
+  //   "editor.defaultFormatter": "esbenp.prettier-vscode"
+  // },
+  // "[jsonc]": {
+  //   "editor.defaultFormatter": "esbenp.prettier-vscode"
+  // },
+  // "[javascriptreact]": {
+  //   "editor.defaultFormatter": "esbenp.prettier-vscode"
+  // },
+  // "[scss]": {
+  //   "editor.defaultFormatter": "esbenp.prettier-vscode"
+  // },
+  // "workbench.colorTheme": "Tokyo Night",
+  // "workbench.sideBar.location": "right",
+  // "workbench.activityBar.location": "hidden",
+  // "workbench.statusBar.visible": false,
+  // "chat.commandCenter.enabled": false,
+
+}

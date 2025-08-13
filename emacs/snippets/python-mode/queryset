@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: queryset
+# key: clsqs
+# --
+
+class $1QuerySet(models.QuerySet["$1"]):
+    """Custom Queryset for $1."""
+
+    $0

@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: straight-use-package
+# key: sup
+# --
+
+(straight-use-package '$1)$0
