@@ -9,6 +9,7 @@ Description: My PyInfra Deployment
 from pyinfra.operations import server
 from pyinfra.operations import dnf
 from pyinfra.operations import git
+from pyinfra.operations import flatpak
 from pyinfra import config
 from pyinfra import logger
 from pyinfra import host
@@ -19,31 +20,29 @@ server.hostname(
     hostname="Workstation",
 )
 
-server.locale(
-    name="Setting en_US.UTF-8",
-    local="en_US.UTF-8",
-)
-
 fedora_version = host.get_fact(facts_server.Command, "rpm -E %fedora")
 
 dnf.rpm(
     name="Installing RPM Fusion Free",
-    src=f"https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{fedora_version}.noarch.rpm"
+    src=f"https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{fedora_version}.noarch.rpm",
+    _sudo=True
 )
 
 dnf.rpm(
     name="Installing RPM Fusion Non-Free",
-    src=f"https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{fedora_version}.noarch.rpm"
+    src=f"https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{fedora_version}.noarch.rpm",
+    _sudo=True
 )
 
-dnf.package(
+dnf.packages(
     name="Installing dnf5-plugins",
     packages="dnf5-plugins",
 )
 
+
 server.shell(
     name="Enable GH Cli Repo",
-    commands="dnf config-manager addrepo --from-repofile=https://cli.github.com/packages/rpm/gh-cli.repo",
+    commands="dnf config-manager addrepo --from-repofile=https://cli.github.com/packages/rpm/gh-cli.repo --overwrite",
     _sudo=True
 )
 
@@ -53,18 +52,9 @@ server.shell(
     _sudo=True,
 )
 
-user = server.user(
-    name="Create user 'ian'",
-    user="ian",
-    present=True,
-    create_home=True,
-    ensure_home=True,
-    group="wheel",
-    shell="/usr/bin/zsh",
-)
-
 server.packages(
     name="Installing Packages...",
+    _sudo=True,
     packages=[
         "fd-find",
         "zsh",
@@ -76,35 +66,28 @@ server.packages(
         "enchant2",
         "enchant2-devel",
         "cmake",
-        "libvterm"
+        "libvterm",
     ]
 )
 
 server.shell(
-    commands="dnf install gh --repo gh-cli",
+    commands="dnf install gh --repo gh-cli -y",
     _sudo=True
 )
 
-flatpak.package(
+flatpak.packages(
     name="Installing Flatpaks...",
     packages=[
-        "com.discordapp.Discord",
         "com.github.finefindus.eyedropper",
         "com.mattjakeman.ExtensionManager",
         "com.microsoft.Edge",
-        "org.freedesktop.Platform",
-        "org.freedesktop.Platform.GL.default",
-        "org.freedesktop.Platform.VAAPI.Intel",
-        "org.freedesktop.Platform.openh264",
-        "org.gnome.Platform",
+        "org.freedesktop.Platform/x86_64/25.08",
+        "org.freedesktop.Platform.GL.default/x86_64/25.08",
+        "org.freedesktop.Platform.VAAPI.Intel/x86_64/25.08",
+        #"org.freedesktop.Platform.openh264/x86_64/25.08",
+        "org.gnome.Platform/x86_64/48",
         "org.zotero.Zotero",
+	"md.obsidian.Obsidian",
         "us.zoom.Zoom",
     ]
-)
-
-git.repo(
-    name="Cloning Dotfiles...",
-    src="https://github.com/ikollipara/dotfiles",
-    dest="/home/ian/dotfiles",
-    user=user,
 )
