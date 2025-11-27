@@ -2,3 +2,5 @@ emacs/var
 emacs/etc
 emacs/auto-save-list
 emacs/*\~
+emacs/eln-cache
+emacs/straight

@@ -110,6 +110,11 @@
 (setq straight-use-package-by-default t
       use-package-enable-imenu-support t)
 
+;;; Buffer Keybinds
+(global-set-key (kbd "C-x x b") 'previous-buffer)
+(global-set-key (kbd "C-x x f") 'next-buffer)
+(global-set-key (kbd "C-x x F") 'font-lock-update)
+
 ;;; No Littering
 ;; No Littering is a tool I use often to help with the sheer amount of files
 ;; created by Emacs. I'm sure there are other ways, but this is the simplest for me.
@@ -254,19 +259,27 @@
 ;; However, I've moved away to try something with a bit more color.
 
 (add-to-list 'custom-theme-load-path (emacs-dir ""))
-(load-theme 'vague t)
+;; (load-theme 'vague t)
 
-;; (use-package catppuccin-theme
-;;   :custom
-;;   (catppuccin-flavor 'mocha)
-;;   :init
-;;   (load-theme 'catppuccin :no-confirm)
-;;   :config
-;;   (defun catppuccin-pick-flavor (flavor)
-;;     "Pick and load a particular `catppuccin-flavor' to use as a theme."
-;;     (interactive (list (ivy-read "Catppuccin Flavor: " '(latte frappe macchiato mocha))))
-;;     (setq catppuccin-flavor (intern flavor))
-;;     (catppuccin-reload)))
+(defvar nano-modeline-position 'top)
+(use-package lambda-themes
+  :straight (:type git :host github :repo "lambda-emacs/lambda-themes")
+  :custom
+  (lambda-themes-set-italic-comments t)
+  (lambda-themes-set-italic-keywords t)
+  (lambda-themes-set-vibrant t)
+  :config
+  (load-theme 'lambda-dark t))
+
+(use-package catppuccin-theme
+  :custom
+  (catppuccin-flavor 'mocha)
+  :config
+  (defun catppuccin-pick-flavor (flavor)
+    "Pick and load a particular `catppuccin-flavor' to use as a theme."
+    (interactive (list (ivy-read "Catppuccin Flavor: " '(latte frappe macchiato mocha))))
+    (setq catppuccin-flavor (intern flavor))
+    (catppuccin-reload)))
 
 ;;; Modeline
 ;; I use a highly customized `nano-modeline' from `rougier/nano-emacs'.
@@ -286,9 +299,6 @@
   (nano-faces)
   (require 'nano-theme)
   (nano-theme--mode-line)
-  (set-face-attribute 'nano-face-header-default nil :background "#252530")
-  (set-face-attribute 'nano-face-header-strong nil :background "#252530")
-  (set-face-attribute 'nano-face-header-faded nil :foreground "#252530")
   (require 'nano-layout)
   (setq window-divider-default-right-width 1)
   (setf (alist-get 'left-fringe default-frame-alist) 0)
@@ -348,7 +358,7 @@
 	      (propertize (make-string available-width ?\ )
                           'face 'nano-face-header-default)
 	      (propertize right 'face `(:inherit nano-face-header-default
-						 :foreground "#bb9dbd")))))
+						 :foreground "#EBE9E7")))))
 
   (advice-add 'nano-modelie-org-clock-mode :override #'nano-modeline-default-mode)
   (nano-modeline)
@@ -547,6 +557,11 @@ Used in the integration of project.el with perspective.el"
 
 ;;;; Programming 
 
+;;; Mise
+
+(use-package mise
+  :hook (after-init . global-mise-mode))
+
 ;;; Yasnippet
 
 (use-package yasnippet
@@ -634,7 +649,13 @@ if one already exists."
 		     (lambda () (executable-find "some-sass-language-server")))
     :activation-fn (lsp-activate-on "scss")
     :add-on? t
-    :server-id 'some-sass)))
+    :server-id 'some-sass))
+  (lsp-register-client
+   (make-lsp-client
+    :new-connection (lsp-stdio-connection '("crystalline"))
+    :activation-fn (lsp-activate-on "crystal")
+    :priority '1
+    :server-id 'crystalline)))
 
 (use-package lsp-ui
   :after lsp-mode
@@ -796,34 +817,16 @@ if one already exists."
 				(file-name-directory dir-or-file)))
   (advice-add 'fsharp-mode/find-sln-or-fsproj :override #'ad--fsharp-find-sln-only))
 
-
-;;; Scala
-;; After F#, I wanted to try something else.
-
-(use-package scala-mode
-  :hook
-  (scala-mode . lsp)
-  :interpreter ("scala" . scala-mode))
-
-(use-package sbt-mode
-  :commands sbt-start sbt-command
-  :config
-  (substitute-key-definition
-   'minibuffer-complete-word
-   'self-insert-command
-   minibuffer-local-completion-map)
-  ;; sbt-supershell kills sbt-mode:  https://github.com/hvesalai/emacs-sbt-mode/issues/152
-  (setq sbt:program-options '("-Dsbt.supershell=false")))
-
-(use-package lsp-metals)
-
-
 ;;; Elm
 ;; I dabble in Elm
 
 (use-package elm-mode
   :hook
   (elm-mode . lsp))
+
+;;; Crystal
+
+(use-package crystal-mode)
 
 ;;; Emacs Lisp
 
@@ -855,15 +858,15 @@ if one already exists."
   (require 'org-habit)
   (require 'org-timer)
   (defun setup-org-faces-height ()
-    (set-face-attribute 'org-level-1 nil :height 1.6)
-    (set-face-attribute 'org-level-2 nil :height 1.4)
-    (set-face-attribute 'org-level-3 nil :height 1.2)
+    (set-face-attribute 'org-level-1 nil :height 1.6 :foreground (face-attribute 'lambda-green :foreground))
+    (set-face-attribute 'org-level-2 nil :height 1.4 :foreground (face-attribute 'lambda-red :foreground))
+    (set-face-attribute 'org-level-3 nil :height 1.2 :foreground (face-attribute 'lambda-aqua :foreground))
     (set-face-attribute 'org-level-4 nil :height 1.0)
     (set-face-attribute 'org-level-5 nil :height 1.0)
     (set-face-attribute 'org-level-6 nil :height 1.0)
     (set-face-attribute 'org-level-7 nil :height 1.0)
     (set-face-attribute 'org-level-8 nil :height 1.0)
-    (set-face-attribute 'org-document-title nil :height 2.0))
+    (set-face-attribute 'org-document-title nil :height 2.0 :foreground (face-attribute 'lambda-blue :foreground)))
   (setq org-directory "~/Dropbox/ZK/"
 	org-agenda-files '("~/Dropbox/Events.org"
 			   "~/Dropbox/CUNE-Cal.org"
@@ -899,153 +902,164 @@ if one already exists."
 ;;; Denote
 ;; I use denote extensively for work, research, project prep, etc.
 
-(use-package denote
-  :after org
-  :bind (("C-c n f" . ivy-open-denote))
-  :hook
-  (dired-mode . denote-dired-mode)
-  (org-mode . denote-rename-buffer-mode)
-  :init
-  (setq denote-directory org-directory
-	xref-search-program 'ripgrep)
-  (defun denote-create-empty-note-and-link (title)
-    "Create an empty note with the title of region. Then link it back to the original document."
-    (interactive (list (cond
-			((use-region-p)
-			 (buffer-substring-no-properties (region-beginning) (region-end)))
-			(t
-			 (ivy-read "Title: ")))))
-    (let ((current-buf (current-buffer))
-	  (note (denote title)))
-      (with-current-buffer (get-file-buffer note)
-	(save-buffer)
-	(if (not current-prefix-arg)
-	    (kill-this-buffer)))
-      (with-current-buffer current-buf
-	(denote-link note 'org (org-get-title note)))
-      (if current-prefix-arg
-	  (switch-to-buffer (get-file-buffer note))
-	(switch-to-buffer current-buf))))
-  (defun fast-read-org-titles (dir)
-    "Use ripgrep to extract #+TITLE lines from .org files under DIR."
-    (let ((default-directory dir))
-      (mapcar
-       (lambda (line)
-	 (when (string-match "^\\(.*\\.org\\):[^\n]*#\\+title:[[:space:]]*\\(.*\\)" line)
-           (cons (expand-file-name (match-string 1 line) dir)
-		 (string-trim (match-string 2 line)))))
-       (process-lines
-	"rg"
-	"--with-filename"       ;; show filename prefix
-	"--no-heading"          ;; one line per match
-	"--smart-case"
-	"--glob" "*.org"        ;; only org files
-	"^#\\+title:"           ;; match title line
-	"."))))                 ;; search from current directory
+;; (use-package denote
+;;   :after org
+;;   :bind (("C-c n f" . ivy-open-denote))
+;;   :hook
+;;   (dired-mode . denote-dired-mode)
+;;   (org-mode . denote-rename-buffer-mode)
+;;   :init
+;;   (setq denote-directory org-directory
+;; 	xref-search-program 'ripgrep)
+;;   (defun denote-create-empty-note-and-link (title)
+;;     "Create an empty note with the title of region. Then link it back to the original document."
+;;     (interactive (list (cond
+;; 			((use-region-p)
+;; 			 (buffer-substring-no-properties (region-beginning) (region-end)))
+;; 			(t
+;; 			 (ivy-read "Title: ")))))
+;;     (let ((current-buf (current-buffer))
+;; 	  (note (denote title)))
+;;       (with-current-buffer (get-file-buffer note)
+;; 	(save-buffer)
+;; 	(if (not current-prefix-arg)
+;; 	    (kill-this-buffer)))
+;;       (with-current-buffer current-buf
+;; 	(denote-link note 'org (org-get-title note)))
+;;       (if current-prefix-arg
+;; 	  (switch-to-buffer (get-file-buffer note))
+;; 	(switch-to-buffer current-buf))))
+;;   (defun fast-read-org-titles (dir)
+;;     "Use ripgrep to extract #+TITLE lines from .org files under DIR."
+;;     (let ((default-directory dir))
+;;       (mapcar
+;;        (lambda (line)
+;; 	 (when (string-match "^\\(.*\\.org\\):[^\n]*#\\+title:[[:space:]]*\\(.*\\)" line)
+;;            (cons (expand-file-name (match-string 1 line) dir)
+;; 		 (string-trim (match-string 2 line)))))
+;;        (process-lines
+;; 	"rg"
+;; 	"--with-filename"       ;; show filename prefix
+;; 	"--no-heading"          ;; one line per match
+;; 	"--smart-case"
+;; 	"--glob" "*.org"        ;; only org files
+;; 	"^#\\+title:"           ;; match title line
+;; 	"."))))                 ;; search from current directory
 
-  (defun ivy-rich--denote-filename-transform (candidate)
-    "Switch the filename to the denote title property."
-    (with-current-buffer (find-file-noselect (concat counsel--fzf-dir "/" candidate))
-      (cadar (org-collect-keywords '("TITLE")))))
+;;   (defun ivy-rich--denote-filename-transform (candidate)
+;;     "Switch the filename to the denote title property."
+;;     (with-current-buffer (find-file-noselect (concat counsel--fzf-dir "/" candidate))
+;;       (cadar (org-collect-keywords '("TITLE")))))
 
 
-  (defun ivy-rich--denote-keyword-transform (candidate)
-    "Grab the keywords."
-    (string-replace "_" ", " (car (string-split (cadr (string-split (cadr (string-split candidate "--")) "__")) ".org"))))
+;;   (defun ivy-rich--denote-keyword-transform (candidate)
+;;     "Grab the keywords."
+;;     (string-replace "_" ", " (car (string-split (cadr (string-split (cadr (string-split candidate "--")) "__")) ".org"))))
 
-  (defun denote-timestamp-to-time (timestamp)
-    "Convert a Denote TIMESTAMP string like '20250401T105148' to an Emacs time object."
-    (let ((year   (string-to-number (substring timestamp 0 4)))
-          (month  (string-to-number (substring timestamp 4 6)))
-          (day    (string-to-number (substring timestamp 6 8)))
-          (hour   (string-to-number (substring timestamp 9 11)))
-          (minute (string-to-number (substring timestamp 11 13)))
-          (second (string-to-number (substring timestamp 13 15))))
-      (encode-time second minute hour day month year)))
+;;   (defun denote-timestamp-to-time (timestamp)
+;;     "Convert a Denote TIMESTAMP string like '20250401T105148' to an Emacs time object."
+;;     (let ((year   (string-to-number (substring timestamp 0 4)))
+;;           (month  (string-to-number (substring timestamp 4 6)))
+;;           (day    (string-to-number (substring timestamp 6 8)))
+;;           (hour   (string-to-number (substring timestamp 9 11)))
+;;           (minute (string-to-number (substring timestamp 11 13)))
+;;           (second (string-to-number (substring timestamp 13 15))))
+;;       (encode-time second minute hour day month year)))
 
-  (defun ivy-rich--denote-created-at-transform (candidate)
-    "Extract a pretty date."
-    (format-time-string "%b %d, %Y" (denote-timestamp-to-time (car (string-split candidate "--")))))
+;;   (defun ivy-rich--denote-created-at-transform (candidate)
+;;     "Extract a pretty date."
+;;     (format-time-string "%b %d, %Y" (denote-timestamp-to-time (car (string-split candidate "--")))))
 
-  (push
-   '(:columns
-     ((nerd-icons-ivy-rich-file-icon)
-      (ivy-rich--denote-filename-transform (:width 0.5))
-      (ivy-rich--denote-keyword-transform (:width 0.35))
-      (ivy-rich--denote-created-at-transform (:width 0.15))))
-   ivy-rich-display-transformers-list)
-  (push 'ivy-open-denote ivy-rich-display-transformers-list)
-  (ivy-rich-reload)
+;;   (push
+;;    '(:columns
+;;      ((nerd-icons-ivy-rich-file-icon)
+;;       (ivy-rich--denote-filename-transform (:width 0.5))
+;;       (ivy-rich--denote-keyword-transform (:width 0.35))
+;;       (ivy-rich--denote-created-at-transform (:width 0.15))))
+;;    ivy-rich-display-transformers-list)
+;;   (push 'ivy-open-denote ivy-rich-display-transformers-list)
+;;   (ivy-rich-reload)
 
-  (defun ivy-open-denote ()
-    "Open a note using a rich ivy interface."
-    (interactive)
-    (let* ((directory (if current-prefix-arg
-			  (ivy-completing-read "Silo: " denote-silo-directories)
-			denote-directory))
-	   (counsel--fzf-dir directory))
-      (with-environment-variables
-	  (("FZF_DEFAULT_COMMAND" "fd --type f -e org"))
-	(ivy-read "Open Note: "
-		  #'counsel-fzf-function
-		  :re-builder #'ivy--regex-fuzzy
-		  :dynamic-collection t
-		  :action (lambda (x)
-			    (with-ivy-window
-			      (let ((default-directory counsel--fzf-dir))
-				(when (bufferp x) (kill-buffer x))
-				(find-file x)))
-			    :caller 'ivy-open-denote))))))
+;;   (defun ivy-open-denote ()
+;;     "Open a note using a rich ivy interface."
+;;     (interactive)
+;;     (let* ((directory (if current-prefix-arg
+;; 			  (ivy-completing-read "Silo: " denote-silo-directories)
+;; 			denote-directory))
+;; 	   (counsel--fzf-dir directory))
+;;       (with-environment-variables
+;; 	  (("FZF_DEFAULT_COMMAND" "fd --type f -e org"))
+;; 	(ivy-read "Open Note: "
+;; 		  #'counsel-fzf-function
+;; 		  :re-builder #'ivy--regex-fuzzy
+;; 		  :dynamic-collection t
+;; 		  :action (lambda (x)
+;; 			    (with-ivy-window
+;; 			      (let ((default-directory counsel--fzf-dir))
+;; 				(when (bufferp x) (kill-buffer x))
+;; 				(find-file x)))
+;; 			    :caller 'ivy-open-denote))))))
 
-(use-package denote-silo
-  :after denote
-  :bind (("C-c n d" . my/denote)
-	 ("C-c n j" . counsel-denote-silo-dired)
+;; (use-package denote-silo
+;;   :after denote
+;;   :bind (("C-c n d" . my/denote)
+;; 	 ("C-c n j" . counsel-denote-silo-dired)
+;; 	 (:map org-mode-map
+;; 	       ("C-'" . avy-dwim)
+;; 	       ("C-c C-x C-d" . denote-link)))
+;;   :init
+;;   (setq denote-silo-directories (list denote-directory
+;; 				      "~/Dropbox/Work/UNL/"
+;; 				      "~/Dropbox/Work/CUNE/"))
+
+;;   (defun ivy-rich--denote-silo-extract-path (candidate)
+;;     (car (reverse (butlast (string-split candidate "/")))))
+
+;;   (defun ivy-rich--denote-silo-description (candidate)
+;;     (cond
+;;      ((equal candidate denote-directory)
+;;       "Personal/Work")
+;;      ((equal candidate "~/Dropbox/Work/UNL/")
+;;       "Research Work")
+;;      ((equal candidate "~/Dropbox/Work/CUNE/")
+;;       "Concordia Work")
+;;      (t
+;;       "Other")))
+
+;;   (push
+;;    '(:columns
+;;      ((nerd-icons-ivy-rich-file-icon)
+;;       (ivy-rich--denote-silo-extract-path (:width 0.15))
+;;       (ivy-rich--denote-silo-description (:width 0.8))))
+;;    ivy-rich-display-transformers-list)
+;;   (push 'counsel-denote-silo-dired ivy-rich-display-transformers-list)
+;;   (ivy-rich-reload)
+
+;;   (defun counsel-denote-silo-dired ()
+;;     (interactive)
+;;     (ivy-read "Silo: "
+;; 	      denote-silo-directories
+;; 	      :re-builder #'ivy--regex-fuzzy
+;; 	      :action (lambda (x)
+;; 			(unless (featurep 'denote-silo) (require 'denote-silo))
+;; 			(denote-silo-with-silo x
+;; 					       (dired x)))))
+
+;;   (defun my/denote (&optional choose-silo)
+;;     "Wrapper for denote that can switch silos based on `current-prefix-arg'."
+;;     (interactive "P")
+;;     (call-interactively (if choose-silo #'denote-silo-create-note #'denote))))
+
+;;; Org Roam
+
+(use-package org-roam
+  :bind (("C-c n f" . org-roam-node-find)
 	 (:map org-mode-map
-	       ("C-'" . avy-dwim)
-	       ("C-c C-x C-d" . denote-link)))
+	       ("C-c i" . org-roam-insert)))
+  :custom
+  (org-roam-directory (file-truename "~/Documents"))
   :init
-  (setq denote-silo-directories (list denote-directory
-				      "~/Dropbox/Work/UNL/"
-				      "~/Dropbox/Work/CUNE/"))
-
-  (defun ivy-rich--denote-silo-extract-path (candidate)
-    (car (reverse (butlast (string-split candidate "/")))))
-
-  (defun ivy-rich--denote-silo-description (candidate)
-    (cond
-     ((equal candidate denote-directory)
-      "Personal/Work")
-     ((equal candidate "~/Dropbox/Work/UNL/")
-      "Research Work")
-     ((equal candidate "~/Dropbox/Work/CUNE/")
-      "Concordia Work")
-     (t
-      "Other")))
-  
-  (push
-   '(:columns
-     ((nerd-icons-ivy-rich-file-icon)
-      (ivy-rich--denote-silo-extract-path (:width 0.15))
-      (ivy-rich--denote-silo-description (:width 0.8))))
-   ivy-rich-display-transformers-list)
-  (push 'counsel-denote-silo-dired ivy-rich-display-transformers-list)
-  (ivy-rich-reload)
-  
-  (defun counsel-denote-silo-dired ()
-    (interactive)
-    (ivy-read "Silo: "
-	      denote-silo-directories
-	      :re-builder #'ivy--regex-fuzzy
-	      :action (lambda (x)
-			(unless (featurep 'denote-silo) (require 'denote-silo))
-			(denote-silo-with-silo x
-					       (dired x)))))
-
-  (defun my/denote (&optional choose-silo)
-    "Wrapper for denote that can switch silos based on `current-prefix-arg'."
-    (interactive "P")
-    (call-interactively (if choose-silo #'denote-silo-create-note #'denote))))
+  (org-roam-db-autosync-mode 1))
 
 ;;; Citar
 ;; I use citar to manage all my bibliographic needs.
@@ -1058,25 +1072,29 @@ if one already exists."
   (org-cite-activate-processor 'citar)
   (citar-bibliography org-cite-global-bibliography))
 
-(use-package citar-denote
-  :after (:all denote citar)
-  :custom
-  (citar-denote-file-type 'org)
-  (citar-denote-keyword "bib")
-  (citar-denote-signature nil)
-  (citar-denote-subdir nil)
-  (citar-denote-template nil)
-  (citar-denote-title-format "title")
-  (citar-denote-title-format-andstr "and")
-  (citar-denote-use-bib-keywords nil)
-  :init
-  (enable-mode citar-denote-mode)
-  ;; Enables Zotero links to work correctly.
-  (org-link-set-parameters
-   "zotero"
-   :follow
-   (lambda (path _)
-     (call-process "xdg-open" nil nil nil (concat "zotero:" path)))))
+(use-package citar-org-roam
+  :after (citar org-roam)
+  :config (citar-org-roam-mode))
+
+;; (use-package citar-denote
+;;   :after (:all denote citar)
+;;   :custom
+;;   (citar-denote-file-type 'org)
+;;   (citar-denote-keyword "bib")
+;;   (citar-denote-signature nil)
+;;   (citar-denote-subdir nil)
+;;   (citar-denote-template nil)
+;;   (citar-denote-title-format "title")
+;;   (citar-denote-title-format-andstr "and")
+;;   (citar-denote-use-bib-keywords nil)
+;;   :init
+;;   (enable-mode citar-denote-mode)
+;;   ;; Enables Zotero links to work correctly.
+;;   (org-link-set-parameters
+;;    "zotero"
+;;    :follow
+;;    (lambda (path _)
+;;      (call-process "xdg-open" nil nil nil (concat "zotero:" path)))))
 
 ;;; Org Modern
 ;; I like my Org /pretty/
@@ -1173,90 +1191,6 @@ if one already exists."
 	    (if (length> (substring file start end) 0)
 		(setq-local citar-bibliography (list (format "./%s" (substring file start end))))
 	      (message "No Bib File Found."))))))))
-
-;;;; Productivity 
-
-(defun productivity/start-new-project (name)
-  (interactive "sProject Name: ")
-  (let* ((denote-use-title name)
-	 (proj-abbrev (read-string "Project Abbrev: "))
-	 (denote-use-keywords (if (length> proj-abbrev 0) `("proj" "active" "agenda" ,proj-abbrev) '("proj" "active" "agenda")))
-	 (current-buf (current-buffer))
-	 (proj-filename (denote)))
-    (switch-to-buffer (get-file-buffer proj-filename))))
-
-(defun productivity/start-project (org-node)
-  "Create a project denote file with the given org-node."
-  (interactive (list (org-element-at-point)))
-  (let* ((denote-use-title (org-entry-get org-node "ITEM"))
-	 (proj-abbrev (read-string "Project Abbrev: "))
-	 (denote-use-keywords (if (length> proj-abbrev 0) `("proj" "active" "agenda" ,proj-abbrev) '("proj" "active" "agenda")))
-	 (current-buf (current-buffer))
-	 (proj-filename (denote)))
-    (with-current-buffer current-buf
-      (org-cut-subtree))
-    (switch-to-buffer (get-file-buffer proj-filename))))
-
-
-(defun productivity/eisenhower (node)
-  "Apply the eisenhower matrix to the given node."
-  (interactive (list (org-element-at-point)))
-  (let* ((item (org-entry-get node "ITEM"))
-	 (urgent? (y-or-n-p (format "Is %s Urgent?" item)))
-	 (important? (y-or-n-p (format "Is %s Important?" item))))
-    (org-set-tags
-     (seq-filter #'identity
-		 (append (org-get-tags node)
-			 (list
-			  (if urgent? "urgent" nil)
-			  (if important? "important" nil)))))))
-
-(defun productivity/add-tag-to-event (node)
-  (org-set-tags (seq-filter #'identity
-			    (append (org-get-tags node)
-				    (list (ivy-read "Tag: " '("personal" "unl" "cune")))))))
-
-(defun productivity/handle-intray ()
-  "Empty Intray and Parse all entries."
-  (interactive)
-  (let ((intray (find-file-noselect "~/Dropbox/Intray.org")))
-    (with-current-buffer intray
-      (org-map-entries
-       (lambda ()
-	 (let* ((item (org-entry-get (org-element-at-point) "ITEM"))
-		(org-refile-use-outline-path 'file)
-		(projects (directory-files denote-directory t "\\`[^.].*proj.*\\.org\\'"))
-		(org-refile-targets `((,projects :level . 1))))
-	   (cond
-	    ((y-or-n-p (format "Can \"%s\" be done in under 2 minutes?" item))
-	     (org-cut-subtree))
-	    ((y-or-n-p (format "Is \"%s\" a Project?" item))
-	     (productivity/start-project (org-element-at-point)))
-	    ((y-or-n-p (format "Is \"%s\" a Task?" item))
-	     (org-todo "TODO")
-	     (productivity/eisenhower (org-element-at-point))
-	     (call-interactively (if (eq (ivy-read "Schedule or Deadline: " '(schedule deadline)) 'schedule) #'org-schedule #'org-deadline))
-	     (call-interactively #'org-refile))
-	    ((y-or-n-p (format "Is \"%s\" an Event?" item))
-	     (productivity/add-tag-to-event (org-element-at-point))
-	     (call-interactively #'org-schedule)
-	     (org-refile nil nil (list item "~/Dropbox/Events.org")))
-	    (t
-	     (org-refile nil nil (list item "~/Dropbox/Someday.org"))))))
-       "level=1"))
-    (org-save-all-org-buffers)))
-
-(defun productivity/gtd-select ()
-  "GTD Select File."
-  (interactive)
-  (switch-to-buffer (find-file-noselect (ivy-read "File: " '("~/Dropbox/Someday.org" "~/Dropbox/Events.org" "~/Dropbox/Intray.org")))))
-
-
-
-;;;; Niri
-
-(use-package kdl-mode
-  :straight '(kdl-mode :type git :host github :repo "bobuk/kdl-mode"))
 
 ;;;; Quick Access (Harpoon)
 
