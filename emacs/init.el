@@ -824,9 +824,13 @@ if one already exists."
   :hook
   (elm-mode . lsp))
 
-;;; Crystal
+;;; Zig
 
-(use-package crystal-mode)
+(use-package zig-mode
+  :hook (zig-mode . lsp))
+
+(use-package ob-zig
+  :straight '(ob-zig :type git :host github :repo "jolby/ob-zig.el"))
 
 ;;; Emacs Lisp
 
@@ -1055,7 +1059,7 @@ if one already exists."
 (use-package org-roam
   :bind (("C-c n f" . org-roam-node-find)
 	 (:map org-mode-map
-	       ("C-c i" . org-roam-insert)))
+	       ("C-c i" . org-roam-node-insert)))
   :custom
   (org-roam-directory (file-truename "~/Documents"))
   :init
