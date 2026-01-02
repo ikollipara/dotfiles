@@ -52,6 +52,8 @@
 ;;;; Base Emacs Configuration 
 ;;; Preface
 
+(defvar work-laptop-p (eq system-type 'darwin))
+
 ;;; Helper Macros
 ;; I use a few macros to make the code a bit clearer.
 
@@ -95,8 +97,21 @@
 		(delete-selection-mode . t)))
   (funcall (car pair) (cdr pair)))
 
-
+(setopt ring-bell-function #'ignore)
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
+
+(setq default-frame-alist
+      (append (list
+	       '(min-height . 1)
+               '(height     . 45)
+	       '(min-width  . 1)
+               '(width      . 81)
+               '(vertical-scroll-bars . nil)
+               '(internal-border-width . 24)
+               '(left-fringe    . 1)
+               '(right-fringe   . 1)
+               '(tool-bar-lines . 0)
+               '(menu-bar-lines . 0))))
 
 ;;; Custom File
 
@@ -104,16 +119,13 @@
 (when (file-exists-p custom-file)
   (load custom-file))
 
+
 ;;; Use Package
 
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t
       use-package-enable-imenu-support t)
 
-;;; Buffer Keybinds
-(global-set-key (kbd "C-x x b") 'previous-buffer)
-(global-set-key (kbd "C-x x f") 'next-buffer)
-(global-set-key (kbd "C-x x F") 'font-lock-update)
 
 ;;; No Littering
 ;; No Littering is a tool I use often to help with the sheer amount of files
@@ -140,14 +152,14 @@
 
 
 (use-package ivy
+  :after amx
   :custom
   (ivy-use-virtual-buffers t)
   (ivy-use-selectable-prompt t)
   :init
-  (enable-mode ivy-mode)
-  :config
-  ;; We add the `swiper' repo to the path so we can use `ivy-avy'.
-  (add-to-list 'load-path (emacs-dir "straight/repos/swiper")))
+  (enable-mode ivy-mode))
+
+
 
 (use-package counsel
   :after ivy
@@ -212,7 +224,8 @@
   (enable-mode nerd-icons-ivy-rich-mode)
   (ivy-rich-reload))
 
-(use-package amx)
+(use-package amx
+  :demand t)
 
 ;;; Autocomplete
 ;; I use `corfu' for my autocomplete. It's a strange pairing, but I prefer the
@@ -230,11 +243,17 @@
   (enable-mode corfu-popupinfo-mode)
   (enable-mode corfu-history-mode))
 
+
 (use-package nerd-icons-corfu
   :after (:all nerd-icons corfu)
   :init
   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
 
+
+(use-package cape
+  :init
+  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  (add-hook 'completion-at-point-functions #'cape-file))
 
 ;;; Fuzzy Matching
 ;; For fuzzy matching I use orderless.
@@ -242,7 +261,8 @@
 (use-package orderless
   :custom
   (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles basic partial-completion))))
+  (completion-category-overrides '((file (styles partial-completion))))
+  (completion-pcm-leading-wildcard t)
   :hook
   (ivy-mode . orderless--setup-ivy)
   :config
@@ -263,23 +283,38 @@
 
 (defvar nano-modeline-position 'top)
 (use-package lambda-themes
+  :disabled t
   :straight (:type git :host github :repo "lambda-emacs/lambda-themes")
   :custom
   (lambda-themes-set-italic-comments t)
   (lambda-themes-set-italic-keywords t)
   (lambda-themes-set-vibrant t)
   :config
-  (load-theme 'lambda-dark t))
+  (load-theme 'lambda-dark t)
+  )
 
 (use-package catppuccin-theme
   :custom
-  (catppuccin-flavor 'mocha)
+  (catppuccin-flavor 'frappe)
   :config
+  ;;(load-theme 'catppuccin)
   (defun catppuccin-pick-flavor (flavor)
     "Pick and load a particular `catppuccin-flavor' to use as a theme."
     (interactive (list (ivy-read "Catppuccin Flavor: " '(latte frappe macchiato mocha))))
     (setq catppuccin-flavor (intern flavor))
     (catppuccin-reload)))
+
+
+(use-package eink-theme
+  :straight '(eink-emacs :type git :host github :repo "maio/eink-emacs")
+  :config
+  ;;(load-theme 'eink)
+  )
+
+(use-package nano-theme
+  :straight '(nano-theme :type git :host github :repo "rougier/nano-theme")
+  :config
+  (load-theme 'nano t))
 
 ;;; Modeline
 ;; I use a highly customized `nano-modeline' from `rougier/nano-emacs'.
@@ -288,110 +323,150 @@
 (setopt battery-mode-line-format "{%t (%b%p)}")
 (enable-mode display-battery-mode)
 
-(use-package nano
-  :straight '(nano :type git :host github :repo "rougier/nano-emacs")
-  :no-require t
-  :init
-  (setopt nano-font-family-monospaced "Space Mono"
-	  nano-font-size 14)
-  (require 'nano-base-colors)
-  (require 'nano-faces)
-  (nano-faces)
-  (require 'nano-theme)
-  (nano-theme--mode-line)
-  (require 'nano-layout)
-  (setq window-divider-default-right-width 1)
-  (setf (alist-get 'left-fringe default-frame-alist) 0)
-  (setf (alist-get 'right-fringe default-frame-alist) 0)
-  (disable-mode tool-bar-mode)
-  (disable-mode scroll-bar-mode)
-  (require 'nano-modeline)
-  (defun nano-modeline-compose (status name primary secondary)
-    "Compose a string with provided information"
-    (let* ((char-width    (window-font-width nil 'header-line))
-           (window        (get-buffer-window (current-buffer)))
-           (space-up       +0.15)
-           (space-down     -0.20)
-	   (prefix (cond ((string= status "RO")
-			  (propertize (if (window-dedicated-p)" -- " " RO ")
-                                      'face 'nano-face-header-popout))
-			 ((string= status "**")
-			  (propertize (if (window-dedicated-p)" -- " " ** ")
-                                      'face 'nano-face-header-critical))
-			 ((string= status "RW")
-			  (propertize (if (window-dedicated-p)" -- " " RW ")
-                                      'face 'nano-face-header-faded))
-			 (t (propertize status 'face 'nano-face-header-popout))))
-           (left (concat
-                  (propertize " "  'face 'nano-face-header-default
-			      'display `(raise ,space-up))
-		  ;; This is a hack that makes the background consistent with the modeline.
-		  (propertize
-		   (nerd-icons-icon-for-buffer)
-		   'face `((:background
-			    ,(face-attribute 'nano-face-header-default :background))
-			   ,(or (get-text-property 0 'face (nerd-icons-icon-for-buffer)) 'nano-face-header-default)))
-		  (propertize " " 'face 'nano-face-header-default)
-                  (propertize name 'face 'nano-face-header-strong)
-                  (propertize " "  'face 'nano-face-header-default
-			      'display `(raise ,space-down))
-		  (propertize primary 'face 'nano-face-header-default)))
-           (right (concat
-		   (when (featurep 'org-timer)
-		     (if org-timer-mode-line-timer
-			 (concat org-timer-mode-line-string " ")
-		       ""))
-		   (when (featurep 'org)
-		     org-mode-line-string)
-		   " " (when (featurep 'perspective)
-			 (string-join (persp-mode-line) ""))
-		   " " battery-mode-line-string
-		   " " display-time-string
-		   " " secondary
-		   "  "))
-           (available-width (- (window-total-width) 
-			       (length prefix) (length left) (length right)
-			       (/ (window-right-divider-width) char-width)))
-	   (available-width (max 1 available-width)))
-      (concat prefix
-	      left
-	      (propertize (make-string available-width ?\ )
-                          'face 'nano-face-header-default)
-	      (propertize right 'face `(:inherit nano-face-header-default
-						 :foreground "#EBE9E7")))))
-
-  (advice-add 'nano-modelie-org-clock-mode :override #'nano-modeline-default-mode)
-  (nano-modeline)
-
-  (defvar nano-modeline-format header-line-format)
-  (defun toggle-nano-modeline ()
-    "Toggle the display of `nano-modeline'."
+(use-package buffer-box
+  :after mode-line-maker
+  :straight '(buffer-box :type git :host github :repo "rougier/buffer-box")
+  :commands setup-buffer-box
+  :hook ((text-mode prog-mode eshell-mode compilation-mode help-mode dired-mode special-mode) . setup-buffer-box)
+  :config
+  (defun setup-buffer-box ()
     (interactive)
-    (setq-local header-line-format (if header-line-format nil nano-modeline-format)))
+    (buffer-box)
+    (setq header-line-format (generate-header-line))))
 
-  (advice-add 'catppuccin-pick-flavor
-	      :after (lambda (&rest args)
-		       (setq nano-base-colors--defaults
-			     `((foreground . ,(face-foreground 'default nil t))
-			       (background . ,(face-background 'default nil t))
-			       (highlight . ,(face-background 'fringe nil t))
-			       (critical . ,(face-foreground 'error nil t))
-			       (salient . ,(face-foreground 'font-lock-keyword-face nil t))
-			       (strong . ,(face-foreground 'default nil t))
-			       (popout . ,(face-foreground 'font-lock-string-face nil t))
-			       (subtle . ,(face-background 'mode-line-inactive nil t))
-			       (faded . ,(face-foreground 'shadow nil t))))
-		       (setopt nano-color-foreground (nano-base-colors--get 'foreground)
-			       nano-color-background (nano-base-colors--get 'background)
-			       nano-color-highlight (nano-base-colors--get 'highlight)
-			       nano-color-critical (nano-base-colors--get 'critical)
-			       nano-color-salient (nano-base-colors--get 'salient)
-			       nano-color-strong (nano-base-colors--get 'strong)
-			       nano-color-popout (nano-base-colors--get 'popout)
-			       nano-color-subtle (nano-base-colors--get 'subtle)
-			       nano-color-faded (nano-base-colors--get 'faded))
-		       (nano-faces)
-		       (set-face-attribute 'internal-border nil :background (face-attribute 'default :background)))))
+
+
+
+(use-package mode-line-maker
+  :straight '(mode-line-maker :type git :host github :repo "rougier/mode-line-maker")
+  :demand t
+  :config
+  (defun generate-header-line ()
+    (mode-line-maker
+     (list
+      " "
+      "[%*] %b"
+      " "
+      "(" '(:eval (if (listp mode-name) (car mode-name) mode-name)) '(:eval (when vc-mode (concat "#" (substring-no-properties vc-mode 5)))) ")")
+     (list
+      '(:eval (when (featurep 'org-timer) (concat org-timer-mode-line-string " ")))
+      '(:eval (when (featurep 'org) (concat org-mode-line-string " ")))
+      '(:eval battery-mode-line-string)
+      " "
+      '(:eval display-time-string)
+      " "
+      '(:eval (string-join (persp-mode-line) ""))
+      " "
+      "%l:%c"
+      " "
+      '(:eval (when (derived-mode-p 'prog-mode) (abbreviate-file-name buffer-file-name)))
+      " "))))
+
+
+
+;; (use-package nano
+;;   :straight '(nano :type git :host github :repo "rougier/nano-emacs")
+;;   :no-require t
+;;   :init
+;;   (setopt nano-font-family-monospaced "Space Mono"
+;; 	  nano-font-size 12)
+;;   (require 'nano-base-colors)
+;;   (require 'nano-faces)
+;;   (nano-faces)
+;;   (require 'nano-theme)
+;;   (nano-theme--mode-line)
+;;   (require 'nano-layout)
+;;   (setq window-divider-default-right-width 1)
+;;   (setf (alist-get 'left-fringe default-frame-alist) 0)
+;;   (setf (alist-get 'right-fringe default-frame-alist) 0)
+;;   (disable-mode tool-bar-mode)
+;;   (disable-mode scroll-bar-mode)
+;;   (require 'nano-modeline)
+;;   (defun nano-modeline-compose (status name primary secondary)
+;;     "Compose a string with provided information"
+;;     (let* ((char-width    (window-font-width nil 'header-line))
+;;            (window        (get-buffer-window (current-buffer)))
+;;            (space-up       +0.15)
+;;            (space-down     -0.20)
+;; 	   (prefix (cond ((string= status "RO")
+;; 			  (propertize (if (window-dedicated-p)" -- " " RO ")
+;;                                       'face 'nano-face-header-popout))
+;; 			 ((string= status "**")
+;; 			  (propertize (if (window-dedicated-p)" -- " " ** ")
+;;                                       'face 'nano-face-header-critical))
+;; 			 ((string= status "RW")
+;; 			  (propertize (if (window-dedicated-p)" -- " " RW ")
+;;                                       'face 'nano-face-header-faded))
+;; 			 (t (propertize status 'face 'nano-face-header-popout))))
+;;            (left (concat
+;;                   (propertize " "  'face 'nano-face-header-default
+;; 			      'display `(raise ,space-up))
+;; 		  ;; This is a hack that makes the background consistent with the modeline.
+;; 		  (propertize
+;; 		   (nerd-icons-icon-for-buffer)
+;; 		   'face `((:background
+;; 			    ,(face-attribute 'nano-face-header-default :background))
+;; 			   ,(or (get-text-property 0 'face (nerd-icons-icon-for-buffer)) 'nano-face-header-default)))
+;; 		  (propertize " " 'face 'nano-face-header-default)
+;;                   (propertize name 'face 'nano-face-header-strong)
+;;                   (propertize " "  'face 'nano-face-header-default
+;; 			      'display `(raise ,space-down))
+;; 		  (propertize primary 'face 'nano-face-header-default)))
+;;            (right (concat
+;; 		   (when (featurep 'org-timer)
+;; 		     (if org-timer-mode-line-timer
+;; 			 (concat org-timer-mode-line-string " ")
+;; 		       ""))
+;; 		   (when (featurep 'org)
+;; 		     org-mode-line-string)
+;; 		   " " (when (featurep 'perspective)
+;; 			 (string-join (persp-mode-line) ""))
+;; 		   " " battery-mode-line-string
+;; 		   " " display-time-string
+;; 		   " " secondary
+;; 		   "  "))
+;;            (available-width (- (window-total-width) 
+;; 			       (length prefix) (length left) (length right)
+;; 			       (/ (window-right-divider-width) char-width)))
+;; 	   (available-width (max 1 available-width)))
+;;       (concat prefix
+;; 	      left
+;; 	      (propertize (make-string available-width ?\ )
+;;                           'face 'nano-face-header-default)
+;; 	      (propertize right 'face `(:inherit nano-face-header-default)))))
+
+;;   (advice-add 'nano-modelie-org-clock-mode :override #'nano-modeline-default-mode)
+;;   (nano-modeline)
+
+;;   (defvar nano-modeline-format header-line-format)
+;;   (defun toggle-nano-modeline ()
+;;     "Toggle the display of `nano-modeline'."
+;;     (interactive)
+;;     (setq-local header-line-format (if header-line-format nil nano-modeline-format)))
+
+;;   (advice-add 'catppuccin-pick-flavor
+;; 	      :after (lambda (&rest args)
+;; 		       (setq nano-base-colors--defaults
+;; 			     `((foreground . ,(face-foreground 'default nil t))
+;; 			       (background . ,(face-background 'default nil t))
+;; 			       (highlight . ,(face-background 'fringe nil t))
+;; 			       (critical . ,(face-foreground 'error nil t))
+;; 			       (salient . ,(face-foreground 'font-lock-keyword-face nil t))
+;; 			       (strong . ,(face-foreground 'default nil t))
+;; 			       (popout . ,(face-foreground 'font-lock-string-face nil t))
+;; 			       (subtle . ,(face-background 'mode-line-inactive nil t))
+;; 			       (faded . ,(face-foreground 'shadow nil t))))
+;; 		       (setopt nano-color-foreground (nano-base-colors--get 'foreground)
+;; 			       nano-color-background (nano-base-colors--get 'background)
+;; 			       nano-color-highlight (nano-base-colors--get 'highlight)
+;; 			       nano-color-critical (nano-base-colors--get 'critical)
+;; 			       nano-color-salient (nano-base-colors--get 'salient)
+;; 			       nano-color-strong (nano-base-colors--get 'strong)
+;; 			       nano-color-popout (nano-base-colors--get 'popout)
+;; 			       nano-color-subtle (nano-base-colors--get 'subtle)
+;; 			       nano-color-faded (nano-base-colors--get 'faded))
+;; 		       (nano-faces)
+;; 		       (set-face-attribute 'internal-border nil :background (face-attribute 'default :background)))))
 
 (defun transparent-p ()
   "Check if transparency is enabled."
@@ -428,6 +503,15 @@ Used in the integration of project.el with perspective.el"
       (persp-switch (project-name (project-current nil)))
       (persp-set-buffer d)
       (persp-switch-to-buffer d)))
+  (defun my/project-ignore-git (orig-fun &rest args)
+    (let ((project (apply orig-fun args)))
+      (when project
+	(let* ((root (car (last project))))
+          (unless (string-prefix-p (expand-file-name "~/Notes/")
+                                   (expand-file-name root))
+            project)))))
+
+  (advice-add 'project--find-in-directory :around #'my/project-ignore-git)
 
   (advice-add 'project-find-dir :around #'advice--create-new-persp-after)
   (advice-add 'project-find-file :around #'advice--create-new-persp-after)
@@ -444,6 +528,7 @@ Used in the integration of project.el with perspective.el"
 
 (set-face-attribute 'default nil :family "Cascadia Code" :height 110)
 (set-face-attribute 'variable-pitch nil :family "Space Mono" :height 110)
+(set-face-attribute 'fixed-pitch nil :family "Space Mono" :height 110)
 
 ;;; Ligatures
 ;; No coding is complete without strong ligature support.
@@ -533,12 +618,17 @@ Used in the integration of project.el with perspective.el"
   :after ivy
   :bind (("C-'" . avy-dwim)
 	 ("M-'" . avy-goto-line))
+  :load-path "./straight/repos/swiper"
   :init
   (defun avy-dwim ()
     "When prefixed, call `avy-goto-char-in-line', otherwise call `avy-goto-char'"
     (interactive)
     (call-interactively (if current-prefix-arg #'avy-goto-char-in-line #'avy-goto-char)))
-  (require 'ivy-avy))
+  (require 'ivy-avy)
+  (defun avy-xref-goto-definition (pt)
+    (goto-char pt)
+    (call-interactively 'xref-find-definitions))
+  (setf (alist-get ?D avy-dispatch-alist) 'avy-xref-goto-definition))
 
 (use-package ace-window
   :bind (("M-o" . other-window-dwim))
@@ -571,11 +661,39 @@ Used in the integration of project.el with perspective.el"
   :init
   (enable-mode yas-global-mode))
 
+;;; Eshell
+
+(use-package eat
+  :straight '(eat :type git :host codeberg :repo "akib/emacs-eat")
+  :hook (eshell-load . eat-eshell-mode)
+  :bind (("C-c s" . eshell))
+  :init
+  (setq eshell-banner-message "
+#                                              
+#                                              
+#    ██████ ▄█████ ██  ██ ██████ ██     ██     
+#    ██▄▄   ▀▀▀▄▄▄ ██████ ██▄▄   ██     ██     
+#    ██▄▄▄▄ █████▀ ██  ██ ██▄▄▄▄ ██████ ██████ 
+#                                              
+")
+  (setq eshell-prompt-function
+	(lambda ()
+	  (concat
+	   (getenv "USER")
+	   ":"
+	   (abbreviate-file-name (eshell/pwd))
+	   (if (= (file-user-uid) 0) " # " " $ "))))
+  (defun eshell/h ()
+    (eshell/cd "~"))
+  (defun eshell/b ()
+    (eshell/cd "..")))
+
 ;;; Vterm
 
 (use-package vterm
   :bind (("C-c s" . vterm)
 	 ("C-x p s" . project-vterm))
+  :disabled t
   :init
   (defun project-vterm ()
     "Start an inferior shell in the current project's root directory.
@@ -590,7 +708,7 @@ if one already exists."
            (shell-buffer (get-buffer default-project-shell-name)))
       (if (and shell-buffer (not current-prefix-arg))
           (if (comint-check-proc shell-buffer)
-              (pop-to-buffer shell-buffer (bound-and-true-p display-comint-buffer-action))
+	      (pop-to-buffer shell-buffer (bound-and-true-p display-comint-buffer-action))
             (vterm shell-buffer))
 	(vterm (generate-new-buffer-name default-project-shell-name))))))
 
@@ -786,6 +904,7 @@ if one already exists."
    ("\\.tpl\\'" . web-mode)
    ("\\.[agj]sp\\'" . web-mode)
    ("\\.as[cp]x\\'" . web-mode)
+   ("\\.cshtml\\'" . web-mode)
    ("\\.erb\\'" . web-mode)
    ("\\.mustache\\'" . web-mode)
    ("\\.djhtml\\'" . web-mode)
@@ -817,6 +936,21 @@ if one already exists."
 				(file-name-directory dir-or-file)))
   (advice-add 'fsharp-mode/find-sln-or-fsproj :override #'ad--fsharp-find-sln-only))
 
+
+;;; C#
+;; Related, C# is also setup here.
+
+(use-package csharp-mode
+  :hook
+  (csharp-ts-mode . lsp))
+
+(use-package csproj-mode
+  :straight '(csproj-mode :type git :host github :repo "omajid/csproj-mode"))
+
+(use-package sharper
+  :bind (:map csharp-ts-mode-map
+	      ("C-c C-c" . sharper-main-transient)))
+
 ;;; Elm
 ;; I dabble in Elm
 
@@ -831,6 +965,21 @@ if one already exists."
 
 (use-package ob-zig
   :straight '(ob-zig :type git :host github :repo "jolby/ob-zig.el"))
+
+
+;;; Ruby
+(use-package inf-ruby
+  :hook (ruby-ts-mode . inf-ruby-minor-mode))
+
+(use-package robe
+  :after cape
+  :hook
+  (ruby-ts-mode . robe-mode)
+  (robe-mode . robe-start-auto)
+  :config
+  (defun robe-start-auto ()
+    (interactive)
+    (robe-start t)))
 
 ;;; Emacs Lisp
 
@@ -854,7 +1003,6 @@ if one already exists."
   :hook
   (org-mode . visual-line-mode)
   (org-mode . variable-pitch-mode)
-  (org-mode . org-indent-mode)
   (org-mode . setup-org-faces-height)
   (org-mode . olivetti-mode)
   :init
@@ -862,27 +1010,44 @@ if one already exists."
   (require 'org-habit)
   (require 'org-timer)
   (defun setup-org-faces-height ()
-    (set-face-attribute 'org-level-1 nil :height 1.6 :foreground (face-attribute 'lambda-green :foreground))
-    (set-face-attribute 'org-level-2 nil :height 1.4 :foreground (face-attribute 'lambda-red :foreground))
-    (set-face-attribute 'org-level-3 nil :height 1.2 :foreground (face-attribute 'lambda-aqua :foreground))
+    (set-face-attribute 'org-level-1 nil :height 1.5 :weight 'bold :foreground (face-attribute 'nano-salient :foreground))
+    (set-face-attribute 'org-level-2 nil :height 1.3 :weight 'bold :foreground (face-attribute 'nano-critical :foreground))
+    (set-face-attribute 'org-level-3 nil :height 1.2 :weight 'bold :foreground (face-attribute 'nano-popout :background))
     (set-face-attribute 'org-level-4 nil :height 1.0)
     (set-face-attribute 'org-level-5 nil :height 1.0)
     (set-face-attribute 'org-level-6 nil :height 1.0)
     (set-face-attribute 'org-level-7 nil :height 1.0)
     (set-face-attribute 'org-level-8 nil :height 1.0)
-    (set-face-attribute 'org-document-title nil :height 2.0 :foreground (face-attribute 'lambda-blue :foreground)))
-  (setq org-directory "~/Dropbox/ZK/"
-	org-agenda-files '("~/Dropbox/Events.org"
-			   "~/Dropbox/CUNE-Cal.org"
-			   "~/Dropbox/GCal.org"
-			   "~/Dropbox/UNL-Cal.org"
-			   "~/Dropbox/ZK/")
-	org-agenda-file-regexp "\\`[^.].*agenda.*\\.org\\'"
-	org-todo-keywords '((sequence "TODO(t)" "WAITING(w)" "|" "DONE(d!)" "CANCELLED(l!)")))
+    (set-face-attribute 'org-document-title nil :height 2.0 :foreground (face-attribute 'nano-salient :foreground)))
+  (setq org-directory "~/Notes/"
+	org-agenda-files '("~/Notes/20251228T165145--agenda__ongoing_personal.org")
+	org-todo-keywords '((sequence "TODO(t)" "WAITING(w)" "|" "DONE(d!)" "CANCELLED(l!)")
+			    (sequence "PROJ(p)" "|" "COMPLETE(c!)")))
 
   (setq org-capture-templates
-	'(("i" "Idea" entry (file "~/Dropbox/Intray.org")
-	   "* %?\n" :empty-lines 1)))
+	'(("i" "Idea" entry (file+headline "~/Notes/20251228T165145--agenda__ongoing_personal.org" "Inbox")
+	   "** %?\n" :empty-lines 1)
+	  ("t" "Todo" entry (file+headline "~/Notes/20251228T165145--agenda__ongoing_personal.org" "Inbox")
+	   "** %?\n" :empty-lines 1)
+	  ("q" "Quotes")
+	  ("qa" "New" plain (file "~/Notes/20251231T025843--quotes__ongoing_personal.org")
+	   "#+begin_quote\n%?\n- %^{Who}\n#+end_quote" :empty-lines 1)
+	  ("j" "Journal")
+	  ("jm" "Morning Dump" plain (file+olp+datetree "~/Notes/20251228T174637--journal__ongoing_personal.org")
+	   "*Morning Dump*\n%?\n" :empty-lines 1)
+	  ("jb" "Daily Bible" plain (file+olp+datetree "~/Notes/20251228T174637--journal__ongoing_personal.org")
+	   "*Bible Study*\n+begin_quote\n%^{Bible Verse}\n- %^{Bible Verse Location}\n#+end_quote\n%?\n" :empty-lines 1)
+	  ("jc" "End of Day" plain (file+olp+datetree "~/Notes/20251228T174637--journal__ongoing_personal.org")
+	   "*End of Day*\n%?\n" :empty-lines 1)
+	  ("w" "Work")
+	  ("wr" "Regrade" entry (file+headline "~/Notes/20251228T165145--agenda__ongoing_personal.org" "Inbox")
+	   "** Regrade %^{What?} for %^{Who?} :cune:%^{Class Code|cs241|bus371}:\nSCHEDULED: %t" :empty-lines 1)
+	  ("wl" "Prep Lecture" entry (file+headline "~/Notes/20251228T165145--agenda__ongoing_personal.org" "Inbox")
+	   "** Prep Lecture for %^{Class Code|cs241|bus371}p :cune:%^{Class Code}\nSCHEDULED: %t" :empty-lines 1)
+	  ("r" "Research")
+	  ("ru" "Thesis Updates" entry (file+headline "~/Notes/20251228T165145--agenda__ongoing_personal.org" "Thesis")
+	   "*** [%U] Updates from Soh\nSCHEDULED: %t" :empty-lines 1 :immediate-finish t)))
+
 
   (defun extract-html-title-libxml (url)
     "Fetch the URL and extract the <title> tag using libxml parsing."
@@ -901,169 +1066,169 @@ if one already exists."
     (let ((title (extract-html-title-libxml link)))
       (insert (format "[[%s][%s]]" link title) "\n"))))
 
+
+(use-package nano-calendar
+  :straight '(nano-calendar :type git :host github :repo "rougier/nano-calendar")
+  :after org
+  :commands nano-calendar
+  :config
+  (defun ad--nano-calendar-remove-all-other-windows (&rest _)
+    (delete-other-windows))
+  (advice-add 'nano-calendar :after #'ad--nano-calendar-remove-all-other-windows))
+
 (require 'org)
 
 ;;; Denote
 ;; I use denote extensively for work, research, project prep, etc.
 
-;; (use-package denote
-;;   :after org
-;;   :bind (("C-c n f" . ivy-open-denote))
-;;   :hook
-;;   (dired-mode . denote-dired-mode)
-;;   (org-mode . denote-rename-buffer-mode)
-;;   :init
-;;   (setq denote-directory org-directory
-;; 	xref-search-program 'ripgrep)
-;;   (defun denote-create-empty-note-and-link (title)
-;;     "Create an empty note with the title of region. Then link it back to the original document."
-;;     (interactive (list (cond
-;; 			((use-region-p)
-;; 			 (buffer-substring-no-properties (region-beginning) (region-end)))
-;; 			(t
-;; 			 (ivy-read "Title: ")))))
-;;     (let ((current-buf (current-buffer))
-;; 	  (note (denote title)))
-;;       (with-current-buffer (get-file-buffer note)
-;; 	(save-buffer)
-;; 	(if (not current-prefix-arg)
-;; 	    (kill-this-buffer)))
-;;       (with-current-buffer current-buf
-;; 	(denote-link note 'org (org-get-title note)))
-;;       (if current-prefix-arg
-;; 	  (switch-to-buffer (get-file-buffer note))
-;; 	(switch-to-buffer current-buf))))
-;;   (defun fast-read-org-titles (dir)
-;;     "Use ripgrep to extract #+TITLE lines from .org files under DIR."
-;;     (let ((default-directory dir))
-;;       (mapcar
-;;        (lambda (line)
-;; 	 (when (string-match "^\\(.*\\.org\\):[^\n]*#\\+title:[[:space:]]*\\(.*\\)" line)
-;;            (cons (expand-file-name (match-string 1 line) dir)
-;; 		 (string-trim (match-string 2 line)))))
-;;        (process-lines
-;; 	"rg"
-;; 	"--with-filename"       ;; show filename prefix
-;; 	"--no-heading"          ;; one line per match
-;; 	"--smart-case"
-;; 	"--glob" "*.org"        ;; only org files
-;; 	"^#\\+title:"           ;; match title line
-;; 	"."))))                 ;; search from current directory
-
-;;   (defun ivy-rich--denote-filename-transform (candidate)
-;;     "Switch the filename to the denote title property."
-;;     (with-current-buffer (find-file-noselect (concat counsel--fzf-dir "/" candidate))
-;;       (cadar (org-collect-keywords '("TITLE")))))
-
-
-;;   (defun ivy-rich--denote-keyword-transform (candidate)
-;;     "Grab the keywords."
-;;     (string-replace "_" ", " (car (string-split (cadr (string-split (cadr (string-split candidate "--")) "__")) ".org"))))
-
-;;   (defun denote-timestamp-to-time (timestamp)
-;;     "Convert a Denote TIMESTAMP string like '20250401T105148' to an Emacs time object."
-;;     (let ((year   (string-to-number (substring timestamp 0 4)))
-;;           (month  (string-to-number (substring timestamp 4 6)))
-;;           (day    (string-to-number (substring timestamp 6 8)))
-;;           (hour   (string-to-number (substring timestamp 9 11)))
-;;           (minute (string-to-number (substring timestamp 11 13)))
-;;           (second (string-to-number (substring timestamp 13 15))))
-;;       (encode-time second minute hour day month year)))
-
-;;   (defun ivy-rich--denote-created-at-transform (candidate)
-;;     "Extract a pretty date."
-;;     (format-time-string "%b %d, %Y" (denote-timestamp-to-time (car (string-split candidate "--")))))
-
-;;   (push
-;;    '(:columns
-;;      ((nerd-icons-ivy-rich-file-icon)
-;;       (ivy-rich--denote-filename-transform (:width 0.5))
-;;       (ivy-rich--denote-keyword-transform (:width 0.35))
-;;       (ivy-rich--denote-created-at-transform (:width 0.15))))
-;;    ivy-rich-display-transformers-list)
-;;   (push 'ivy-open-denote ivy-rich-display-transformers-list)
-;;   (ivy-rich-reload)
-
-;;   (defun ivy-open-denote ()
-;;     "Open a note using a rich ivy interface."
-;;     (interactive)
-;;     (let* ((directory (if current-prefix-arg
-;; 			  (ivy-completing-read "Silo: " denote-silo-directories)
-;; 			denote-directory))
-;; 	   (counsel--fzf-dir directory))
-;;       (with-environment-variables
-;; 	  (("FZF_DEFAULT_COMMAND" "fd --type f -e org"))
-;; 	(ivy-read "Open Note: "
-;; 		  #'counsel-fzf-function
-;; 		  :re-builder #'ivy--regex-fuzzy
-;; 		  :dynamic-collection t
-;; 		  :action (lambda (x)
-;; 			    (with-ivy-window
-;; 			      (let ((default-directory counsel--fzf-dir))
-;; 				(when (bufferp x) (kill-buffer x))
-;; 				(find-file x)))
-;; 			    :caller 'ivy-open-denote))))))
-
-;; (use-package denote-silo
-;;   :after denote
-;;   :bind (("C-c n d" . my/denote)
-;; 	 ("C-c n j" . counsel-denote-silo-dired)
-;; 	 (:map org-mode-map
-;; 	       ("C-'" . avy-dwim)
-;; 	       ("C-c C-x C-d" . denote-link)))
-;;   :init
-;;   (setq denote-silo-directories (list denote-directory
-;; 				      "~/Dropbox/Work/UNL/"
-;; 				      "~/Dropbox/Work/CUNE/"))
-
-;;   (defun ivy-rich--denote-silo-extract-path (candidate)
-;;     (car (reverse (butlast (string-split candidate "/")))))
-
-;;   (defun ivy-rich--denote-silo-description (candidate)
-;;     (cond
-;;      ((equal candidate denote-directory)
-;;       "Personal/Work")
-;;      ((equal candidate "~/Dropbox/Work/UNL/")
-;;       "Research Work")
-;;      ((equal candidate "~/Dropbox/Work/CUNE/")
-;;       "Concordia Work")
-;;      (t
-;;       "Other")))
-
-;;   (push
-;;    '(:columns
-;;      ((nerd-icons-ivy-rich-file-icon)
-;;       (ivy-rich--denote-silo-extract-path (:width 0.15))
-;;       (ivy-rich--denote-silo-description (:width 0.8))))
-;;    ivy-rich-display-transformers-list)
-;;   (push 'counsel-denote-silo-dired ivy-rich-display-transformers-list)
-;;   (ivy-rich-reload)
-
-;;   (defun counsel-denote-silo-dired ()
-;;     (interactive)
-;;     (ivy-read "Silo: "
-;; 	      denote-silo-directories
-;; 	      :re-builder #'ivy--regex-fuzzy
-;; 	      :action (lambda (x)
-;; 			(unless (featurep 'denote-silo) (require 'denote-silo))
-;; 			(denote-silo-with-silo x
-;; 					       (dired x)))))
-
-;;   (defun my/denote (&optional choose-silo)
-;;     "Wrapper for denote that can switch silos based on `current-prefix-arg'."
-;;     (interactive "P")
-;;     (call-interactively (if choose-silo #'denote-silo-create-note #'denote))))
-
-;;; Org Roam
-
-(use-package org-roam
-  :bind (("C-c n f" . org-roam-node-find)
-	 (:map org-mode-map
-	       ("C-c i" . org-roam-node-insert)))
-  :custom
-  (org-roam-directory (file-truename "~/Documents"))
+(use-package denote
+  :after org
+  :bind (("C-c n f" . ivy-open-denote))
+  :hook
+  (dired-mode . denote-dired-mode)
+  (org-mode . denote-rename-buffer-mode)
   :init
-  (org-roam-db-autosync-mode 1))
+  (setq denote-directory org-directory
+	xref-search-program 'ripgrep)
+  (defun denote-create-empty-note-and-link (title)
+    "Create an empty note with the title of region. Then link it back to the original document."
+    (interactive (list (cond
+			((use-region-p)
+			 (buffer-substring-no-properties (region-beginning) (region-end)))
+			(t
+			 (ivy-read "Title: ")))))
+    (let ((current-buf (current-buffer))
+	  (note (denote title)))
+      (with-current-buffer (get-file-buffer note)
+	(save-buffer)
+	(if (not current-prefix-arg)
+	    (kill-this-buffer)))
+      (with-current-buffer current-buf
+	(denote-link note 'org (org-get-title note)))
+      (if current-prefix-arg
+	  (switch-to-buffer (get-file-buffer note))
+	(switch-to-buffer current-buf))))
+  (defun fast-read-org-titles (dir)
+    "Use ripgrep to extract #+TITLE lines from .org files under DIR."
+    (let ((default-directory dir))
+      (mapcar
+       (lambda (line)
+	 (when (string-match "^\\(.*\\.org\\):[^\n]*#\\+title:[[:space:]]*\\(.*\\)" line)
+           (cons (expand-file-name (match-string 1 line) dir)
+		 (string-trim (match-string 2 line)))))
+       (process-lines
+	"rg"
+	"--with-filename"       ;; show filename prefix
+	"--no-heading"          ;; one line per match
+	"--smart-case"
+	"--glob" "*.org"        ;; only org files
+	"^#\\+title:"           ;; match title line
+	"."))))                 ;; search from current directory
+
+  (defun ivy-rich--denote-filename-transform (candidate)
+    "Switch the filename to the denote title property."
+    (let ((options (fast-read-org-titles counsel--fzf-dir))
+	  (normalized-name (expand-file-name (concat counsel--fzf-dir candidate))))
+      (alist-get normalized-name options nil nil 'string=)))
+
+  (defun ivy-rich--denote-keyword-transform (candidate)
+    "Grab the keywords."
+    (string-replace "_" ", " (car (string-split (cadr (string-split (cadr (string-split candidate "--")) "__")) ".org"))))
+
+  (defun denote-timestamp-to-time (timestamp)
+    "Convert a Denote TIMESTAMP string like '20250401T105148' to an Emacs time object."
+    (let ((year   (string-to-number (substring timestamp 0 4)))
+          (month  (string-to-number (substring timestamp 4 6)))
+          (day    (string-to-number (substring timestamp 6 8)))
+          (hour   (string-to-number (substring timestamp 9 11)))
+          (minute (string-to-number (substring timestamp 11 13)))
+          (second (string-to-number (substring timestamp 13 15))))
+      (encode-time second minute hour day month year)))
+
+  (defun ivy-rich--denote-created-at-transform (candidate)
+    "Extract a pretty date."
+    (format-time-string "%b %d, %Y" (denote-timestamp-to-time (car (string-split candidate "--")))))
+
+  (push
+   '(:columns
+     ((nerd-icons-ivy-rich-file-icon)
+      (ivy-rich--denote-filename-transform (:width 0.5))
+      (ivy-rich--denote-keyword-transform (:width 0.35))
+      (ivy-rich--denote-created-at-transform (:width 0.15))))
+   ivy-rich-display-transformers-list)
+  (push 'ivy-open-denote ivy-rich-display-transformers-list)
+  (ivy-rich-reload)
+
+  (defun ivy-open-denote ()
+    "Open a note using a rich ivy interface."
+    (interactive)
+    (let* ((directory (if current-prefix-arg
+			  (ivy-completing-read "Silo: " denote-silo-directories)
+			denote-directory))
+	   (counsel--fzf-dir directory))
+      (with-environment-variables
+	  (("FZF_DEFAULT_COMMAND" "fd --type f -e org"))
+	(ivy-read "Open Note: "
+		  #'counsel-fzf-function
+		  :re-builder #'ivy--regex-fuzzy
+		  :dynamic-collection t
+		  :action (lambda (x)
+			    (with-ivy-window
+			      (let ((default-directory counsel--fzf-dir))
+				(when (bufferp x) (kill-buffer x))
+				(find-file x)))
+			    :caller 'ivy-open-denote))))))
+
+(use-package denote-silo
+  :after denote
+  :bind (("C-c n d" . my/denote)
+	 ("C-c n j" . counsel-denote-silo-dired)
+	 (:map org-mode-map
+	       ("C-'" . avy-dwim)
+	       ("C-c C-x C-d" . denote-link)))
+  :init
+  (setq denote-silo-directories (list denote-directory
+				      "~/Dropbox/Work/UNL/"
+				      "~/Dropbox/Work/CUNE/"))
+
+  (defun ivy-rich--denote-silo-extract-path (candidate)
+    (car (reverse (butlast (string-split candidate "/")))))
+
+  (defun ivy-rich--denote-silo-description (candidate)
+    (cond
+     ((equal candidate denote-directory)
+      "Personal/Work")
+     ((equal candidate "~/Dropbox/Work/UNL/")
+      "Research Work")
+     ((equal candidate "~/Dropbox/Work/CUNE/")
+      "Concordia Work")
+     (t
+      "Other")))
+
+  (push
+   '(:columns
+     ((nerd-icons-ivy-rich-file-icon)
+      (ivy-rich--denote-silo-extract-path (:width 0.15))
+      (ivy-rich--denote-silo-description (:width 0.8))))
+   ivy-rich-display-transformers-list)
+  (push 'counsel-denote-silo-dired ivy-rich-display-transformers-list)
+  (ivy-rich-reload)
+
+  (defun counsel-denote-silo-dired ()
+    (interactive)
+    (ivy-read "Silo: "
+	      denote-silo-directories
+	      :re-builder #'ivy--regex-fuzzy
+	      :action (lambda (x)
+			(unless (featurep 'denote-silo) (require 'denote-silo))
+			(denote-silo-with-silo x
+					       (dired x)))))
+
+  (defun my/denote (&optional choose-silo)
+    "Wrapper for denote that can switch silos based on `current-prefix-arg'."
+    (interactive "P")
+    (call-interactively (if choose-silo #'denote-silo-create-note #'denote))))
+
 
 ;;; Citar
 ;; I use citar to manage all my bibliographic needs.
@@ -1076,38 +1241,39 @@ if one already exists."
   (org-cite-activate-processor 'citar)
   (citar-bibliography org-cite-global-bibliography))
 
-(use-package citar-org-roam
-  :after (citar org-roam)
-  :config (citar-org-roam-mode))
+;; (use-package citar-org-roam
+;;   :after (citar org-roam)
+;;   :config (citar-org-roam-mode))
 
-;; (use-package citar-denote
-;;   :after (:all denote citar)
-;;   :custom
-;;   (citar-denote-file-type 'org)
-;;   (citar-denote-keyword "bib")
-;;   (citar-denote-signature nil)
-;;   (citar-denote-subdir nil)
-;;   (citar-denote-template nil)
-;;   (citar-denote-title-format "title")
-;;   (citar-denote-title-format-andstr "and")
-;;   (citar-denote-use-bib-keywords nil)
-;;   :init
-;;   (enable-mode citar-denote-mode)
-;;   ;; Enables Zotero links to work correctly.
-;;   (org-link-set-parameters
-;;    "zotero"
-;;    :follow
-;;    (lambda (path _)
-;;      (call-process "xdg-open" nil nil nil (concat "zotero:" path)))))
+(use-package citar-denote
+  :after (:all denote citar)
+  :custom
+  (citar-denote-file-type 'org)
+  (citar-denote-keyword "bib")
+  (citar-denote-signature nil)
+  (citar-denote-subdir nil)
+  (citar-denote-template nil)
+  (citar-denote-title-format "title")
+  (citar-denote-title-format-andstr "and")
+  (citar-denote-use-bib-keywords nil)
+  :init
+  (enable-mode citar-denote-mode)
+  ;; Enables Zotero links to work correctly.
+  (org-link-set-parameters
+   "zotero"
+   :follow
+   (lambda (path _)
+     (call-process "xdg-open" nil nil nil (concat "zotero:" path)))))
 
 ;;; Org Modern
 ;; I like my Org /pretty/
 
 (use-package org-modern
+  :disabled t
   :hook
   (org-mode . org-modern-mode)
   :custom
-  (org-modern-replace-stars "12345678")
+  (org-modern-replace-stars "①②③④⑤⑥⑦⑧⑨")
   (org-modern-star 'replace)
   (org-modern-keyword '(("title" . "Τ")
 			("author" . "Α")
@@ -1196,9 +1362,71 @@ if one already exists."
 		(setq-local citar-bibliography (list (format "./%s" (substring file start end))))
 	      (message "No Bib File Found."))))))))
 
-;;;; Quick Access (Harpoon)
+;;;; Misc 
+;;; Mu4e
+(use-package mu4e
+  :straight nil
+  :bind (("C-c m" . mu4e)
+	 (:map mu4e-view-mode-map
+	       ("n" . next-line)
+	       ("p" . previous-line)
+	       ("C-n" . mu4e-headers-next)
+	       ("C-p" . mu4e-headers-prev)))
+  :init
+  (add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu4e")
+  :custom
+  (mail-user-agent 'mu4e-user-agent)
+  (mu4e-drafts-folder "/[Gmail]/Drafts")
+  (mu4e-sent-folder "/[Gmail]/Sent Mail")
+  (mu4e-trash-folder "/[Gmail]/Trash")
+  (mu4e-refile-folder "/[Gmail]/All Mail")
+  (mu4e-get-mail-command "mbsync -V gmail")
+  (message-signature "Sincerely,\nIan")
+  (mu4e-maildir-shortcuts
+   '( (:maildir "/INBOX"              :key ?i)
+      (:maildir "/[Gmail]/Sent Mail"  :key ?s)
+      (:maildir "/[Gmail]/Trash"      :key ?t)
+      (:maildir "/[Gmail]/All Mail"   :key ?a)))
+  :config
+  (require 'smtpmail)
+  (setq message-send-mail-function 'smtpmail-send-it
+	smtpmail-stream-type 'starttls
+	smtpmail-default-smtp-server "smtp.gmail.com"
+	smtpmail-smtp-server "smtp.gmail.com"
+	smtpmail-smtp-service 587)
+  (setq message-kill-buffer-on-exit t))
 
 
+(setq initial-buffer-choice (lambda () (find-file "~/Notes/20251231T024642--yearly-goals__ongoing_personal.org")))
+
+;;;; Work 
+
+(use-package markdown-mode
+  :hook
+  (markdown-mode . olivetti-mode)
+  (markdown-mode . variable-pitch-mode)
+  :custom
+  (markdown-header-scaling t)
+  (markdown-marginalize-headers t)
+  (markdown-enable-wiki-links t)
+  (markdown-wiki-links-alias-first nil)
+  (markdown-enable-math t)
+  (markdown-hide-urls t)
+  (markdown-hide-markup t)
+  (markdown-fontify-code-blocks-natively t)
+  (markdown-enable-highlighting-syntax t))
+
+
+(use-package obsidian
+  :if work-laptop-p
+  :bind (("C-c n M-f" . obsidian-jump))
+  :hook (after-init . obsidian-rescan-cache)
+  :custom
+  (obsidian-directory (expand-file-name "~/Documents"))
+  (obsidian-inbox-directory "Notes")
+  :config
+  (global-obsidian-mode t)
+  (obsidian-backlinks-mode))
 
 (provide 'init)
 ;;; init.el ends here
