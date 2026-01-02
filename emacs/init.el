@@ -1401,6 +1401,9 @@ if one already exists."
 
 ;;;; Work 
 
+(when work-laptop-p
+  (setopt ns-command-modifier 'meta))
+
 (use-package markdown-mode
   :hook
   (markdown-mode . olivetti-mode)
