@@ -6,10 +6,6 @@
 
 This is my dotfiles setup for my Fedora Workstation. I primarily use Emacs to interact with my machine.
 
-#+CAPTION: Emacs Example
-#+NAME: img:emacs
-[[./docs/Screenshot From 2025-06-13 12-21-23.png]]
-
 #+CAPTION: Workspace View
 #+NAME: img:wrk
 [[./docs/Screenshot From 2025-06-13 12-37-34.png]]
