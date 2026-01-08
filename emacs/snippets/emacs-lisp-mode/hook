@@ -1,6 +1,0 @@
-# -*- mode: snippet -*-
-# name: hook
-# key: h
-# --
-
-(add-hook '$1 #'$2)$0

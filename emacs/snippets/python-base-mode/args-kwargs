@@ -1,6 +1,0 @@
-# -*- mode: snippet -*-
-# name: args and kwargs
-# key: ak
-# --
-
-*args, **kwargs
