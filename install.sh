@@ -64,7 +64,7 @@ sudo dnf copr enable -y scottames/ghostty
 
 log "Stage 4: Installing Packages" $green_fg
 log "- Installing System Packages" $blue_fg
-sudo dnf install -y $pkgs
+sudo dnf install -y fd-find ripgrep emacs emacsclient enchant2 enchant2-devel tmux fish nix nix-daemon mise gh zed ghostty helix gnome-tweaks
 sudo systemctl enable --now nix-daemon
 flatpak install -y flathub com.valvesoftware.Steam com.discordapp.Discord com.mattjakeman.ExtensionManager
 
