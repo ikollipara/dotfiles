@@ -80,12 +80,17 @@ mise use -g ghcup@
 nix-env --install --attr devenv -f "https://github.com/NixOS/nixpkgs/tarball/nixpkgs-unstable"
 mise exec -- uv python install 3.13
 mise exec -- uv python install 3.14
-mise exec -- uv tool install pgcli cookiecutter ruff djade "python-lsp-server[rope]" gnome-extensions-cli
+mise exec -- uv tool install pgcli 
+mise exec -- uv tool install cookiecutter 
+mise exec -- uv tool install ruff 
+mise exec -- uv tool install djade 
+mise exec -- uv tool install "python-lsp-server[rope]" 
+mise exec -- uv tool install gnome-extensions-cli
 mise exec -- npm i -g some-sass-language-server vscode-langservers-extended
-mise exec -- ghcup install ghc@9.10.3
-mise exec -- ghcup install stack@3.7.1
-mise exec -- ghcup install hls@2.14.0.0
-mise exec -- ghcup install cabal@3.14.2.0
+mise exec -- ghcup install ghc 9.10.3
+mise exec -- ghcup install stack 3.7.1
+mise exec -- ghcup install hls 2.14.0.0
+mise exec -- ghcup install cabal 3.14.2.0
 
 log "- Installing Helium" $blue_bg
 curl -o $HOME/.local/bin/helium "https://github.com/imputnet/helium-linux/releases/download/0.12.1.1/helium-0.12.1.1-x86_64.AppImage"
