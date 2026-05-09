@@ -44,23 +44,23 @@ git clone https://github.com/ikollipara/dotfiles $HOME/dotfiles
 log "Stage 2: Installing RPMs" $green_fg
 log "- Installing RPM Fusion" $blue_fg
 sudo dnf config-manager setopt fedora-cisco-openh264.enabled=1
-sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${fedora_version}.noarch.rpm
-sudo dnf install https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${fedora_version}.noarch.rpm
+sudo dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${fedora_version}.noarch.rpm
+sudo dnf install -y https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${fedora_version}.noarch.rpm
 
 log "- Installing Dropbox" $blue_fg
-sudo dnf install https://www.dropbox.com/download?dl=packages/fedora/nautilus-dropbox-2026.01.15-1.fc43.x86_64.rpm
+sudo dnf install -y https://www.dropbox.com/download?dl=packages/fedora/nautilus-dropbox-2026.01.15-1.fc43.x86_64.rpm
 
 log "- Installing Terra Repos (for Zed)" $blue_fg
-sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+sudo dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
 
 log ""
 
 log "Stage 3: Enabling Coprs" $green_fg
 log "- Enabling Mise" $blue_fg
-sudo dnf copr enable jdxcode/mise
+sudo dnf copr enable -y jdxcode/mise
 log ""
 log "- Enabling Ghostty" $blue_fg
-sudo dnf copr enable scottames/ghostty
+sudo dnf copr enable -y scottames/ghostty
 
 log "Stage 4: Installing Packages" $green_fg
 log "- Installing System Packages" $blue_fg
