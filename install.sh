@@ -134,7 +134,7 @@ gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/or
 
 gsettings set org.gnome.settings-daemon.plugins.media-keys control-center "['<Super>i']"
 gsettings set org.gnome.settings-daemon.plugins.media-keys home "['<Super>e']"
-gsettings set org.gnome.desktops.input-sources xkb-options "['ctrl:nocaps']"
+gsettings set org.gnome.desktop.input-sources xkb-options "['ctrl:nocaps']"
 
 log "- Setting Favorite" $blue_fg
 gsettings set org.gnome.shell favorite-apps"['helium.desktop', 'emacs.desktop', 'org.gnome.Calendar.desktop']"
