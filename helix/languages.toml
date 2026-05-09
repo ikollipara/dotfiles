@@ -1,4 +1,4 @@
-[[languages]]
+[[language]]
 name = "ruby"
 scope = "source.ruby"
 injection-regex = "ruby"
@@ -43,6 +43,31 @@ shebangs = ["ruby"]
 comment-token = "#"
 indent = { tab-width = 2, unit = " " }
 
-[[grammar]]
-name = "ruby"
-source = { git = "https://github.com/tree-sitter/tree-sitter-ruby" }
+[[language]]
+name = "hamlet"
+language-id = "html"
+scope = "text.html.basic"
+file-types = ["hamlet"]
+grammar = "html"
+indent = { tab-width = 2, unit = "  " }
+
+
+[[language]]
+name = "haskell"
+scope = "source.haskell"
+injection-regex = "hs|haskell"
+file-types = ["hs", "hs-boot", "hsc"]
+roots = ["Setup.hs", "stack.yaml", "cabal.project", "hie.yaml"]
+shebangs = ["runhaskell", "stack"]
+comment-token = "--"
+block-comment-tokens = { start = "{-", end = "-}" }
+language-servers = [ "haskell-language-server" ]
+indent = { tab-width = 2, unit = "  " }
+formatter = { command = "ormolu", args = ["--stdin-input-file", "%{buffer_name}"] }
+auto-format = true
+
+# [[grammar]]
+# name = "html"
+# source = { git = "https://github.com/tree-sitter/tree-sitter-html" }
+
+

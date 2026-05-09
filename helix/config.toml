@@ -1,10 +1,14 @@
-theme = "tokyonight"
+theme = "vague"
 
 [editor]
 line-number = "relative"
 text-width = 120
 popup-border = "all"
 color-modes = true
+default-yank-register = '+'
+
+[editor.indent-guides]
+render = true
 
 [editor.file-picker]
 hidden = false
@@ -25,16 +29,6 @@ select = "underline"
 
 [keys.normal]
 C-y = ":sh tmux new-window -n fx '~/.config/helix/yazi-picker.sh open'"
-"$" = "goto_line_end"
-0 = "goto_line_start"
-G = "goto_file_end"
-V = ["select_mode", "extend_to_line_bounds"]
-x = "delete_selection"
 
 [keys.select]
 0 = "goto_line_start"
-"$" = "goto_line_end"
-G = "goto_file_end"
-D = ["extend_to_line_bounds", "delete_selection", "normal_mode"]
-k = ["extend_line_up", "extend_to_line_bounds"]
-j = ["extend_line_down", "extend_to_line_bounds"]

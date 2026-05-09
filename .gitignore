@@ -4,3 +4,4 @@ emacs/auto-save-list
 emacs/*\~
 emacs/eln-cache
 emacs/straight
+helix/runtime/grammars

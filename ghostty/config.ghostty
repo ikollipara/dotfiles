@@ -1,0 +1,4 @@
+theme = Catppuccin Mocha
+font-family = "CaskcaydiaCove NF"
+background-opacity = 0.8
+window-decoration = "none"
